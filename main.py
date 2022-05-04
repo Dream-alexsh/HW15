@@ -93,26 +93,54 @@ def main():
 
     connect(query_8)
 
+    query_81 = """
+            CREATE TABLE IF NOT EXISTS animal_type(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            "type" VARCHAR(50)
+    )
+    """
+
+    connect(query_81)
+
+    query_82 = """
+                INSERT INTO animal_type ("type")
+            SELECT DISTINCT animals.animal_type
+            FROM animals
+    """
+
+    connect(query_82)
+
     query_9 = """
             CREATE TABLE IF NOT EXISTS animals_final(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 age_upon_outcome VARCHAR(50),
                 animal_id VARCHAR(50),
-                animal_type VARCHAR(50),
-                name VARCHAR(50),
+                "name" VARCHAR(50),
                 breed_type_id INTEGER,
                 date_of_birth VARCHAR(50),
                 outcome_id INTEGER,
+                animal_type_id INTEGER,
+                colors_id INTEGER,
+                FOREIGN KEY (animal_type_id) REFERENCES animal_type(id),
                 FOREIGN KEY(outcome_id) REFERENCES outcome(id),
-                FOREIGN KEY(breed_type_id) REFERENCES breed_type(id)
+                FOREIGN KEY(breed_type_id) REFERENCES breed_type(id),
+                FOREIGN KEY(colors_id) REFERENCES colors(id)
         )
         """
 
     connect(query_9)
 
     query_10 = """
-            INSERT INTO animals_final (age_upon_outcome, animal_id, animal_type, name, breed_type_id, date_of_birth, outcome_id)
-            SELECT DISTINCT animals.age_upon_outcome, animals.animal_id, animals.animal_type, animals.name, breed_type.id, animals.date_of_birth, outcome.id
+                    INSERT INTO animals_final (age_upon_outcome,
+                                               animal_id,
+                                               "name",
+                                               breed_type_id,
+                                               date_of_birth,
+                                               outcome_id,
+                                               animal_type_id,
+                                               colors_id
+                                               )
+            SELECT DISTINCT animals.age_upon_outcome, animals.animal_id, animals.name, breed_type.id, animals.date_of_birth, outcome.id, animal_type.id, colors.id
             FROM animals
             LEFT JOIN outcome
                 ON outcome.subtype = animals.outcome_subtype
@@ -120,7 +148,11 @@ def main():
                 AND outcome."month" = animals.outcome_month
                 AND outcome."year" = animals.outcome_year
             JOIN breed_type
-                ON breed_type.breed = animals.breed ;
+                ON breed_type.breed = animals.breed
+            JOIN animal_type
+                ON animal_type.type = animals.animal_type
+            JOIN colors
+                ON colors.color = animals.color1
         """
 
     connect(query_10)
@@ -154,10 +186,10 @@ def app_main(animal):
     with sqlite3.connect('animal.db') as connection:
         cursor = connection.cursor()
         query_12 = """
-                SELECT name, age_upon_outcome, date_of_birth
+                SELECT "name", age_upon_outcome, date_of_birth
                 FROM animals_final
                 WHERE id LIKE :animal
-                ORDER BY name
+                ORDER BY "name"
             """
         cursor.execute(query_12, {'animal': f'{animal}'})
         result = cursor.fetchall()
